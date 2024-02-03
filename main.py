@@ -5,11 +5,6 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 import json
 
-# Загрузка данных из JSON файла
-with open('pro3.json', 'r') as file:
-    data = json.load(file)
-
-
 def create_model(data):
     global item, label_to_index, EegDataset, EegClassifier, model, batch_size
     # Подготовка данных для обучения
@@ -78,40 +73,8 @@ def create_model(data):
     torch.onnx.export(model, dummy_input, 'trained_model.onnx', input_names=['input'], output_names=['output'])
     # Предположим, что у вас уже есть обученная модель (model)
 
-    # Пример новых данных для предсказания
-    # item = {
-    #     "Attention": 85,
-    #     "Meditation": 60,
-    #     "Signal": 80,
-    #     "Delta": 50,
-    #     "Theta": 30,
-    #     "LowAlpha": 25,
-    #     "HighAlpha": 35,
-    #     "LowBeta": 40,
-    #     "HighBeta": 55,
-    #     "LowGamma": 20,
-    #     "HighGamma": 15
-    # }
-    # # Преобразование новых данных в тензор PyTorch
-    # new_data_tensor = torch.tensor(
-    #     [[item['Attention'], item['Meditation'], item['Signal'], item['Delta'], item['Theta'],
-    #       item['LowAlpha'], item['HighAlpha'], item['LowBeta'], item['HighBeta'],
-    #       item['LowGamma'], item['HighGamma']]], dtype=torch.float32)
-    # # Установка модели в режим предсказания (evaluation mode)
-    # model.eval()
-    # # Предсказание на новых данных
-    # with torch.no_grad():
-    #     outputs = model(new_data_tensor)
-    #     _, predicted_indices = torch.max(outputs, 1)
-    # # Преобразование числовых индексов обратно в метки классов
-    # index_to_label = {index: label for label, index in label_to_index.items()}
-    # predicted_labels = [index_to_label[idx.item()] for idx in predicted_indices]
-    # print("Predicted EventNames:")
-    # for label in predicted_labels:
-    #     print(label)
 
 
-create_model(data)
 
 # Создание Flask-приложения
 app = Flask(__name__)
@@ -161,3 +124,37 @@ def update_model():
 
 if __name__ == '__main__':
     app.run(debug=False)
+
+
+def test():
+    # Пример новых данных для предсказания
+        item = {
+            "Attention": 85,
+            "Meditation": 60,
+            "Signal": 80,
+            "Delta": 50,
+            "Theta": 30,
+            "LowAlpha": 25,
+            "HighAlpha": 35,
+            "LowBeta": 40,
+            "HighBeta": 55,
+            "LowGamma": 20,
+            "HighGamma": 15
+        }
+        # Преобразование новых данных в тензор PyTorch
+        new_data_tensor = torch.tensor(
+            [[item['Attention'], item['Meditation'], item['Signal'], item['Delta'], item['Theta'],
+              item['LowAlpha'], item['HighAlpha'], item['LowBeta'], item['HighBeta'],
+              item['LowGamma'], item['HighGamma']]], dtype=torch.float32)
+        # Установка модели в режим предсказания (evaluation mode)
+        model.eval()
+        # Предсказание на новых данных
+        with torch.no_grad():
+            outputs = model(new_data_tensor)
+            _, predicted_indices = torch.max(outputs, 1)
+        # Преобразование числовых индексов обратно в метки классов
+        index_to_label = {index: label for label, index in label_to_index.items()}
+        predicted_labels = [index_to_label[idx.item()] for idx in predicted_indices]
+        print("Predicted EventNames:")
+        for label in predicted_labels:
+            print(label)

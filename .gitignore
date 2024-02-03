@@ -1,0 +1,14 @@
+
+*.onnx
+*.pth
+pro3.json
+# PID file generated to support live reload
+.pid
+
+.idea/*
+!.idea/protoeditor.xml
+.vscode
+.iml
+
+.env
+vendor
