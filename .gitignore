@@ -4,6 +4,8 @@
 pro3.json
 # PID file generated to support live reload
 .pid
+trained_model.onnx
+trained_model.pth
 
 .idea/*
 !.idea/protoeditor.xml

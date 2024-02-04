@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 import json
 
+
 def create_model(data):
     global item, label_to_index, EegDataset, EegClassifier, model, batch_size
     # Подготовка данных для обучения
@@ -65,6 +66,9 @@ def create_model(data):
             optimizer.step()
 
         print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item()}")
+
+    show_state(data)
+
     # Ваша модель теперь обучена и готова для использования.
     # Сохранение весов модели
     torch.save(model.state_dict(), 'trained_model.pth')
@@ -74,10 +78,55 @@ def create_model(data):
     # Предположим, что у вас уже есть обученная модель (model)
 
 
+def show_state(data):
+    isTrue = 0
+    enc = {}
+    enc['ml'] = 0
+    enc['mr'] = 0
+    enc['mu'] = 0
+    enc['md'] = 0
+    enc['mlr'] = 0
+    enc['mrr'] = 0
+    enc['mur'] = 0
+    enc['mdr'] = 0
+    for di in data:
+        en = di["EventName"]
+        di["EventName"] = ""
+        eng = test(di)
+        if eng == en:
+            isTrue = isTrue + 1
+            enc[eng] = enc[eng] + 1
+            enc[eng + 'r'] = enc[eng + 'r'] + 1
+    l = len(data)
+    print('ok:')
+    print(isTrue / l * 100)
+    for enci in enc:
+        print(enci)
+        print(enc[enci] / l * 100)
 
 
 # Создание Flask-приложения
 app = Flask(__name__)
+
+
+def test(item):
+    # Преобразование новых данных в тензор PyTorch
+    new_data_tensor = torch.tensor(
+        [[item['Attention'], item['Meditation'], item['Signal'], item['Delta'], item['Theta'],
+          item['LowAlpha'], item['HighAlpha'], item['LowBeta'], item['HighBeta'],
+          item['LowGamma'], item['HighGamma']]], dtype=torch.float32)
+    # Установка модели в режим предсказания (evaluation mode)
+    model.eval()
+    # Предсказание на новых данных
+    with torch.no_grad():
+        outputs = model(new_data_tensor)
+        _, predicted_indices = torch.max(outputs, 1)
+    # Преобразование числовых индексов обратно в метки классов
+    index_to_label = {index: label for label, index in label_to_index.items()}
+    predicted_labels = [index_to_label[idx.item()] for idx in predicted_indices]
+    for label in predicted_labels:
+        return label
+
 
 # Эндпоинт для получения предсказаний на основе данных
 @app.route('/get', methods=['POST'])
@@ -113,6 +162,7 @@ def get_prediction():
 
         return jsonify({'EventName': label})
 
+
 # Эндпоинт для обновления модели на основе данных
 @app.route('/set', methods=['POST'])
 def update_model():
@@ -122,39 +172,6 @@ def update_model():
 
         return "Модель обновлена успешно"
 
+
 if __name__ == '__main__':
     app.run(debug=False)
-
-
-def test():
-    # Пример новых данных для предсказания
-        item = {
-            "Attention": 85,
-            "Meditation": 60,
-            "Signal": 80,
-            "Delta": 50,
-            "Theta": 30,
-            "LowAlpha": 25,
-            "HighAlpha": 35,
-            "LowBeta": 40,
-            "HighBeta": 55,
-            "LowGamma": 20,
-            "HighGamma": 15
-        }
-        # Преобразование новых данных в тензор PyTorch
-        new_data_tensor = torch.tensor(
-            [[item['Attention'], item['Meditation'], item['Signal'], item['Delta'], item['Theta'],
-              item['LowAlpha'], item['HighAlpha'], item['LowBeta'], item['HighBeta'],
-              item['LowGamma'], item['HighGamma']]], dtype=torch.float32)
-        # Установка модели в режим предсказания (evaluation mode)
-        model.eval()
-        # Предсказание на новых данных
-        with torch.no_grad():
-            outputs = model(new_data_tensor)
-            _, predicted_indices = torch.max(outputs, 1)
-        # Преобразование числовых индексов обратно в метки классов
-        index_to_label = {index: label for label, index in label_to_index.items()}
-        predicted_labels = [index_to_label[idx.item()] for idx in predicted_indices]
-        print("Predicted EventNames:")
-        for label in predicted_labels:
-            print(label)
